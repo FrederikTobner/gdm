@@ -35,7 +35,11 @@ jobs:
 
     - name: Run Tests
       if: env.BUILD_TYPE = Debug
-      run: ctest -C ${{env.BUILD_TYPE}}
+    
+    - name: Create Coverage report
+      working-directory: ${{github.workspace}}/build/test
+      if: env.BUILD_TYPE = Release
+      run: ctest -C ${{env.BUILD_TYPE}} ..process && gcovr -r ../.. --xml-pretty -o ../../coverage.xml && cat ../../coverage.xml
 
     - name: Upload Report to Codecov
       if: env.BUILD_TYPE = Release
@@ -43,4 +47,7 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
-        gcov = true
+        files: ./coverage.xml
+        fail_ci_if_error: true
+        functionalities: fix   run: ctest -C ${{env.BUILD_TYPE}}
+
