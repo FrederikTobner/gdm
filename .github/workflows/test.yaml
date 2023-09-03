@@ -42,8 +42,8 @@ jobs:
     
     - name: Create Coverage report
       run: |
-        cd build/test
-        gcovr -r ../.. --xml
+        cd build
+        gcovr -r .. --xml
 
     - name: Upload Report to Codecov
       uses: codecov/codecov-action@v3
