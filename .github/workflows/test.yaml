@@ -34,7 +34,9 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Run Tests
+      working-directory: ${{github.workspace}}/build/test
       if: env.BUILD_TYPE = Debug
+      run: ctest -C ${{env.BUILD_TYPE}}
     
     - name: Create Coverage report
       working-directory: ${{github.workspace}}/build/test
@@ -49,5 +51,5 @@ jobs:
       with:
         files: ./coverage.xml
         fail_ci_if_error: true
-        functionalities: fix   run: ctest -C ${{env.BUILD_TYPE}}
+        functionalities: fix 
 
