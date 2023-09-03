@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.24)
 enable_testing()
 
 
-include(CodeCoverage)
+include(../cmake/CodeCoverage.cmake)
 append_coverage_compiler_flags()
 
 set(GDM_TESTS ${PROJECT_NAME}-Tests)
