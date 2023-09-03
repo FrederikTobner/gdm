@@ -41,8 +41,8 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}}
     
     - name: Generate a code coverage report
-        uses: threeal/gcovr-action@latest
-    
+      uses: threeal/gcovr-action@latest
+
     - name: Upload Report to Codecov
       uses: codecov/codecov-action@v3
       env:
