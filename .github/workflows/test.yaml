@@ -33,15 +33,15 @@ jobs:
     - name: Build tests
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Create Coverage report
-      working-directory: ${{github.workspace}}/build/test
-      run: ctest -C ${{env.BUILD_TYPE}} ..process && gcovr -r ../.. --xml -o ../../coverage.xml
+    - name: Run Tests
+      if: env.BUILD_TYPE = Debug
+      run: ctest -C ${{env.BUILD_TYPE}}
 
     - name: Upload Report to Codecov
+      if: env.BUILD_TYPE = Release
+      working-directory: ${{github.workspace}}/build/test
       uses: codecov/codecov-action@v3
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
-        files: ./coverage.xml
-        fail_ci_if_error: true
-        functionalities: fix
+        gcovr = true
