@@ -1,0 +1,53 @@
+name: Tests
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      BUILD_TYPE: ${{matrix.buildtypes}}
+    strategy:  
+      matrix:
+        buildtypes: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Ninja
+      uses: ashutoshvarma/setup-ninja@master
+      with:
+        version: 1.10.2
+
+    - name: Setup MSVC under Windows
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Configure CMake        
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja -DGDM_BUILD_TESTS=ON
+
+    - name: Build tests
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Run tests
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}}
+    
+    - name: Setup OpenCppCoverage and add to Path
+      id: setup_opencppcoverage
+      run: |
+        choco install OpenCppCoverage -y
+        echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
+    - name: Generate Report
+      id: generate_test_report
+      shell: cmd
+      run: OpenCppCoverage.exe --verbose --sources src --export_type cobertura:cpplox.xml -- build/test/Game-Development-Mathematics-Tests.exe
+    - name: Upload Report to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        files: ./cpplox.xml
+        fail_ci_if_error: true
+        functionalities: fix
