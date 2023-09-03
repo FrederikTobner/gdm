@@ -41,9 +41,8 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}}
     
     - name: Create Coverage report
-      run: |
-        cd build
-        gcovr -r .. --xml
+      working-directory: ${{github.workspace}}/build/test
+      run: gcovr -r ../../ --xml -o ../../coverage.xml
 
     - name: Upload Report to Codecov
       uses: codecov/codecov-action@v3
