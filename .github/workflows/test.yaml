@@ -24,7 +24,6 @@ jobs:
           ninja-build \
           gcc-13 \
           g++-13 \
-          lcov \
           ${NULL+}
 
     - name: Setup gcovr
@@ -36,13 +35,9 @@ jobs:
     - name: Build tests
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Run tests
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
-    
     - name: Create Coverage report
       working-directory: ${{github.workspace}}/build/test
-      run: gcovr -r ../../ --xml -o ../../coverage.xml
+      run: ctest -C ${{env.BUILD_TYPE}} ..process && gcovr -r ../.. --xml -o ../../coverage.xml
 
     - name: Upload Report to Codecov
       uses: codecov/codecov-action@v3
