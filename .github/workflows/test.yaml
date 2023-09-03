@@ -44,4 +44,4 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
-        gcovr = true
+        gcov = true
