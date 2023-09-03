@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     env:
       BUILD_TYPE: ${{matrix.buildtypes}}
     strategy:  
@@ -16,16 +16,22 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Setup Ninja
-      uses: ashutoshvarma/setup-ninja@master
-      with:
-        version: 1.10.2
+    - name: Setup Build Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          cmake \
+          ninja-build \
+          gcc-13 \
+          g++-13 \
+          lcov \
+          ${NULL+}
 
-    - name: Setup MSVC under Windows
-      uses: ilammy/msvc-dev-cmd@v1
+    - name: Setup gcovr
+      run: pip install gcovr
 
     - name: Configure CMake        
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja -DGDM_BUILD_TESTS=ON
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja -DGDM_BUILD_TESTS=ON
 
     - name: Build tests
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -34,20 +40,15 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
     
-    - name: Setup OpenCppCoverage and add to Path
-      id: setup_opencppcoverage
-      run: |
-        choco install OpenCppCoverage -y
-        echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
     - name: Generate Report
-      id: generate_test_report
-      shell: cmd
-      run: OpenCppCoverage.exe --verbose --sources src --export_type cobertura:cpplox.xml -- build/test/Game-Development-Mathematics-Tests.exe
+      run: |
+        cd build
+        gcovr -r .. --xml
     - name: Upload Report to Codecov
       uses: codecov/codecov-action@v3
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
-        files: ./cpplox.xml
+        files: ./coverage.xml
         fail_ci_if_error: true
         functionalities: fix
