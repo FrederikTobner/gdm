@@ -67,7 +67,7 @@ class Matrix {
     auto operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
     auto operator-=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
     auto operator*=(T const & scalar) -> Matrix<T, m, n> &;
-    auto operator*=(Matrix<T, n, m> const & mat) -> Matrix<T, m, n> &;
+    auto operator*=(Matrix<T, n, m> const & mat) -> Matrix<T, n, n> &;
     auto operator/=(T const & scalar) -> Matrix<T, m, n> &;
 
     inline auto operator!() -> Matrix<T, m, n>;
