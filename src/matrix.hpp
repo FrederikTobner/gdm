@@ -378,6 +378,11 @@ requires std::is_floating_point_v<T>
     std::array<std::array<T, m>, m>result;
     for (std::size_t i = 0; i < m; i++) {
         for (std::size_t j = 0; j < m; j++) {
+                result[i][j] = 0.0;
+        }
+    }
+    for (std::size_t i = 0; i < m; i++) {
+        for (std::size_t j = 0; j < m; j++) {
             for(std::size_t k = 0; k < n; k++) {
                 result[i][j] += m_matrix[i][k] * mat.m_matrix[k][j];
             }
