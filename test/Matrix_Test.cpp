@@ -208,6 +208,23 @@ TEST(Matrix, VectorMultiplication) {
 }
 
 /*
+ * Testing multiplication operator with a matrix
+ */
+TEST(Matrix, MatrixMultiplication) {
+    // Arrange
+    Matrix<float, 2, 3> firstMatrix = {1, 3, -2, 0, -1, 4};
+    Matrix<float, 3, 2> secondMatrix = {2, -2, 1, 5, -3, 4};
+
+    // Act
+    Matrix<float, 2, 2> fourthMatrix = firstMatrix * secondMatrix;
+
+    // Assert
+    EXPECT_EQ(11, fourthMatrix(0, 0));
+    EXPECT_EQ(5, fourthMatrix(0, 1));
+    EXPECT_EQ(-13, fourthMatrix(1, 0));
+    EXPECT_EQ(11, fourthMatrix(1, 1));
+}
+/*
  * Testing division operator with a scalar
  */
 TEST(Matrix, ScalarDivision) {

@@ -26,6 +26,8 @@ class Matrix {
     Matrix(std::array<std::array<T, n>, m> values);
     ~Matrix();
 
+    friend class Matrix<T, n, m>;
+
     friend std::ostream & operator<<(std::ostream & os, Matrix<T, m, n> const & mat) {
         for (std::size_t i = 0; i < m; i++) {
             os << "(";
@@ -57,6 +59,7 @@ class Matrix {
     auto operator-(Matrix<T, m, n> const & mat) const -> Matrix<T, m, n>;
     auto operator*(T const & scalar) const -> Matrix<T, m, n>;
     auto operator*(Vector3D<T> const & vec) const -> Vector3D<T>;
+    auto operator*(Matrix<T, n, m> const & mat) const -> Matrix<T, m, m>;
     auto operator/(T const & scalar) const -> Matrix<T, m, n>;
 
     auto operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
@@ -359,6 +362,26 @@ template <typename T, std::size_t m, std::size_t n>
         }
     }
     return Matrix<T, m, n>(result);
+}
+
+/// @brief Multiply this matrix by another matrix
+/// @tparam T The underlying type used for calculations within the matrix 
+/// @tparam m The number of rows in the matrix
+/// @tparam n The amount of columns in the matrix 
+/// @param mat The other matrix to multiply by
+/// @return The product of the two matrices
+template <typename T, std::size_t m, std::size_t n>
+requires std::is_floating_point_v<T>
+[[nodiscard]] auto Matrix<T, m, n>::operator*(Matrix<T, n, m> const & mat) const -> Matrix<T, m, m> {
+    std::array<std::array<T, m>, m>result;
+    for (std::size_t i = 0; i < m; i++) {
+        for (std::size_t j = 0; j < m; j++) {
+            for(std::size_t k = 0; k < n; k++) {
+                result[i][j] += m_matrix[i][k] * mat.m_matrix[k][j];
+            }
+        }
+    }
+    return Matrix<T, m, m>(result);
 }
 
 /// @brief Add a matrix to this matrix

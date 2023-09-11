@@ -24,7 +24,6 @@ jobs:
           ninja-build \
           gcc-13 \
           g++-13 \
-          gcovr \
           ${NULL+}
 
     - name: Configure CMake        
@@ -37,19 +36,4 @@ jobs:
       working-directory: ${{github.workspace}}/build/test
       if: env.BUILD_TYPE == 'Debug'
       run: ctest -C ${{env.BUILD_TYPE}}
-    
-    - name: Create Coverage report
-      working-directory: ${{github.workspace}}/build/test
-      if: env.BUILD_TYPE == 'Release'
-      run: ctest -C ${{env.BUILD_TYPE}} ..process && gcovr -r ../.. --xml-pretty -o ../../coverage.xml && cat ../../coverage.xml
-
-    - name: Upload Report to Codecov
-      if: env.BUILD_TYPE == 'Release'
-      uses: codecov/codecov-action@v3
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      with:
-        files: ./coverage.xml
-        fail_ci_if_error: true
-        functionalities: fix 
 
