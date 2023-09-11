@@ -4,6 +4,7 @@
 
 #include "Vector3D.hpp"
 
+/// @brief The namespace for the Game Development Mathematics library
 namespace GDM {
 
 /// @brief Represents a matrix of type T with m rows and n coloumns
@@ -393,12 +394,7 @@ requires std::is_floating_point_v<T>
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 [[nodiscard]] auto Matrix<T, m, n>::operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> & {
-    for (std::size_t i = 0; i < m; i++) {
-        for (std::size_t j = 0; j < n; j++) {
-            m_matrix[i][j] += mat(i, j);
-        }
-    }
-    return *this;
+    return *this = this + mat;
 }
 
 /// Subtracts a matrix from this matrix
@@ -410,12 +406,7 @@ template <typename T, std::size_t m, std::size_t n>
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 [[nodiscard]] Matrix<T, m, n> & Matrix<T, m, n>::operator-=(Matrix<T, m, n> const & mat) {
-    for (std::size_t i = 0; i < m; i++) {
-        for (std::size_t j = 0; j < n; j++) {
-            this->m_matrix[i][j] -= mat[i][j];
-        }
-    }
-    return *this;
+    return *this = *this - mat;
 }
 
 /// @brief Multiply this matrix by a scalar
@@ -427,29 +418,19 @@ template <typename T, std::size_t m, std::size_t n>
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 [[nodiscard]] auto Matrix<T, m, n>::operator*=(T const & scalar) -> Matrix<T, m, n> & {
-    for (std::size_t i = 0; i < m; i++) {
-        for (std::size_t j = 0; j < n; j++) {
-            this->m_matrix[i][j] *= scalar;
-        }
-    }
-    return *this;
+    return *this = this * scalar;
 }
 
-/// @brief Multiply this matrix by another matrix
+/// @brief Multiply this matrix by a scalar
 /// @tparam T The underlying type of the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
-/// @param mat The matrix to multiply by
+/// @param scalar The scalar to multiply by
 /// @return Matrix<T, m, n> & A reference to the moved matrix
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-[[nodiscard]] auto Matrix<T, m, n>::operator*=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> & {
-    for (std::size_t i = 0; i < m; i++) {
-        for (std::size_t j = 0; j < n; j++) {
-            this->m_matrix[i][j] *= mat[i][j];
-        }
-    }
-    return *this;
+[[nodiscard]] auto Matrix<T, m, n>::operator*=(Matrix<T, n, m> const & mat) -> Matrix<T, n, n> & {
+    return *this = this * mat;
 }
 
 /// @brief Divide this matrix by a scalar
