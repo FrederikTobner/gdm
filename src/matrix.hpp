@@ -1,3 +1,5 @@
+/// @file Contains a templated matrix class
+
 #pragma once
 
 #include "precompiled_headers.hpp"
@@ -16,7 +18,6 @@ template <typename T = float, std::size_t m = 3, std::size_t n = 3>
 class Matrix {
 
   public:
-    // Represents a row of the matrix
     class Row;
 
     explicit Matrix();
@@ -66,7 +67,7 @@ class Matrix {
     auto operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
     auto operator-=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
     auto operator*=(T const & scalar) -> Matrix<T, m, n> &;
-    auto operator*=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
+    auto operator*=(Matrix<T, n, m> const & mat) -> Matrix<T, m, n> &;
     auto operator/=(T const & scalar) -> Matrix<T, m, n> &;
 
     inline auto operator!() -> Matrix<T, m, n>;
