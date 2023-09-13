@@ -5,9 +5,29 @@
 using namespace GDM;
 
 /*
- * Testing simple matrix creation
+* Default constructor
+*/
+TEST(Matrix, DefaultConstructor) {
+    // Arrange and Act
+    Matrix<> matrix;
+
+    // Assert
+    EXPECT_EQ(3, matrix.getRows());
+    EXPECT_EQ(3, matrix.getColoumns());
+    for (size_t i = 0; i < 3; i++)
+    {
+        for (size_t j = 0; j < 3; j++)
+        {
+            EXPECT_EQ(matrix(i, j), 0.0);
+        }        
+    }    
+}
+
+
+/*
+ * Testing constructor with an array
  */
-TEST(Matrix, Creation) {
+TEST(Matrix, ArrayConstructor) {
     // Arrange and Act
     Matrix<> matrix({1, 2, 3, 4, 5, 6, 7, 8, 9});
 
@@ -97,15 +117,67 @@ TEST(Matrix, Move) {
 }
 
 /*
+* Testing copy assingment operator
+*/
+TEST(Matrix, CopyAssignment) {
+    // Arrange
+    Matrix<> firstMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    Matrix<> secondMatrix;
+
+    // Act
+    secondMatrix = firstMatrix;
+    firstMatrix = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    // Assert
+    EXPECT_EQ(3, secondMatrix.getRows());
+    EXPECT_EQ(3, secondMatrix.getColoumns());
+    EXPECT_EQ(1, secondMatrix(0, 0));
+    EXPECT_EQ(2, secondMatrix(0, 1));
+    EXPECT_EQ(3, secondMatrix(0, 2));
+    EXPECT_EQ(4, secondMatrix(1, 0));
+    EXPECT_EQ(5, secondMatrix(1, 1));
+    EXPECT_EQ(6, secondMatrix(1, 2));
+    EXPECT_EQ(7, secondMatrix(2, 0));
+    EXPECT_EQ(8, secondMatrix(2, 1));
+    EXPECT_EQ(9, secondMatrix(2, 2));
+}
+
+/*
+ * Testing move assingment operator
+ */
+TEST(Matrix, MoveAssignment) {
+    // Arrange
+    Matrix<> firstMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    // Act
+    Matrix<> secondMatrix = std::move(firstMatrix);
+    firstMatrix = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    // Assert
+    EXPECT_EQ(3, secondMatrix.getRows());
+    EXPECT_EQ(3, secondMatrix.getColoumns());
+    EXPECT_EQ(1, secondMatrix(0, 0));
+    EXPECT_EQ(2, secondMatrix(0, 1));
+    EXPECT_EQ(3, secondMatrix(0, 2));
+    EXPECT_EQ(4, secondMatrix(1, 0));
+    EXPECT_EQ(5, secondMatrix(1, 1));
+    EXPECT_EQ(6, secondMatrix(1, 2));
+    EXPECT_EQ(7, secondMatrix(2, 0));
+    EXPECT_EQ(8, secondMatrix(2, 1));
+    EXPECT_EQ(9, secondMatrix(2, 2));
+}
+
+
+/*
  * Testing eqaulity operator
  */
 TEST(Matrix, Equality) {
     // Arrange
     Matrix<> firstMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     Matrix<> secondMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    Matrix<> thirdMatrix = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // Act and Assert
-    Matrix<> thirdMatrix = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     ASSERT_TRUE(firstMatrix == secondMatrix);
     ASSERT_FALSE(firstMatrix == thirdMatrix);
 }
@@ -193,20 +265,6 @@ TEST(Matrix, ScalarMultiplication) {
     ASSERT_EQ(18, fourthMatrix(2, 2));
 }
 
-TEST(Matrix, VectorMultiplication) {
-    // Arrange
-    Matrix<> matrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    Vector3D<> vec = {1, 2, 3};
-
-    // Act
-    Vector3D<> resultVector = matrix * vec;
-
-    // Assert
-    ASSERT_EQ(14, resultVector[0]);
-    ASSERT_EQ(32, resultVector[1]);
-    ASSERT_EQ(50, resultVector[2]);
-}
-
 /*
  * Testing multiplication operator with a matrix
  */
@@ -246,6 +304,95 @@ TEST(Matrix, ScalarDivision) {
     ASSERT_EQ(8, fourthMatrix(2, 1));
     ASSERT_EQ(9, fourthMatrix(2, 2));
 }
+
+/*
+ * Testing addition assignment operator
+ */
+TEST(Matrix, AdditionAssignment) {
+    // Arrange
+    Matrix<> firstMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    // Act
+    firstMatrix += firstMatrix;
+
+    // Assert
+    ASSERT_EQ(2, firstMatrix(0, 0));
+    ASSERT_EQ(4, firstMatrix(0, 1));
+    ASSERT_EQ(6, firstMatrix(0, 2));
+    ASSERT_EQ(8, firstMatrix(1, 0));
+    ASSERT_EQ(10, firstMatrix(1, 1));
+    ASSERT_EQ(12, firstMatrix(1, 2));
+    ASSERT_EQ(14, firstMatrix(2, 0));
+    ASSERT_EQ(16, firstMatrix(2, 1));
+    ASSERT_EQ(18, firstMatrix(2, 2));
+}
+
+/*
+* Testing subtraction assignment operator
+*/
+TEST(Matrix, SubtractionAssignment) {
+    // Arrange
+    Matrix<> firstMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    // Act
+    firstMatrix -= firstMatrix;
+
+    // Assert
+    ASSERT_EQ(0, firstMatrix(0, 0));
+    ASSERT_EQ(0, firstMatrix(0, 1));
+    ASSERT_EQ(0, firstMatrix(0, 2));
+    ASSERT_EQ(0, firstMatrix(1, 0));
+    ASSERT_EQ(0, firstMatrix(1, 1));
+    ASSERT_EQ(0, firstMatrix(1, 2));
+    ASSERT_EQ(0, firstMatrix(2, 0));
+    ASSERT_EQ(0, firstMatrix(2, 1));
+    ASSERT_EQ(0, firstMatrix(2, 2));
+}
+
+/*
+ * Testing multiplication assignment operator with a scalar
+ */ 
+TEST(Matrix, ScalarMultiplicationAssignment) {
+    // Arrange
+    Matrix<> firstMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    // Act
+    firstMatrix *= 2;
+
+    // Assert
+    ASSERT_EQ(2, firstMatrix(0, 0));
+    ASSERT_EQ(4, firstMatrix(0, 1));
+    ASSERT_EQ(6, firstMatrix(0, 2));
+    ASSERT_EQ(8, firstMatrix(1, 0));
+    ASSERT_EQ(10, firstMatrix(1, 1));
+    ASSERT_EQ(12, firstMatrix(1, 2));
+    ASSERT_EQ(14, firstMatrix(2, 0));
+    ASSERT_EQ(16, firstMatrix(2, 1));
+    ASSERT_EQ(18, firstMatrix(2, 2));
+}
+
+/*
+ * Testing division assignment operator with a scalar
+ */
+TEST(Matrix, ScalarDivisionAssignment) {
+    // Arrange
+    Matrix<> firstMatrix = {2, 4, 6, 8, 10, 12, 14, 16, 18};
+
+    // Act
+    firstMatrix /= 2;
+
+    // Assert
+    ASSERT_EQ(1, firstMatrix(0, 0));
+    ASSERT_EQ(2, firstMatrix(0, 1));
+    ASSERT_EQ(3, firstMatrix(0, 2));
+    ASSERT_EQ(4, firstMatrix(1, 0));
+    ASSERT_EQ(5, firstMatrix(1, 1));
+    ASSERT_EQ(6, firstMatrix(1, 2));
+    ASSERT_EQ(7, firstMatrix(2, 0));
+    ASSERT_EQ(8, firstMatrix(2, 1));
+    ASSERT_EQ(9, firstMatrix(2, 2));
+}
+
 
 /*
  * Testing determinant calculation

@@ -4,13 +4,11 @@
 
 #include "precompiled_headers.hpp"
 
-#include "Vector3D.hpp"
-
 /// @brief The namespace for the Game Development Mathematics library
 namespace GDM {
 
 /// @brief Represents a matrix of type T with m rows and n coloumns
-/// @tparam T The type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 template <typename T = float, std::size_t m = 3, std::size_t n = 3>
@@ -27,6 +25,9 @@ class Matrix {
     Matrix(Matrix<T, m, n> && mat);
     Matrix(std::array<std::array<T, n>, m> values);
     ~Matrix();
+
+    auto operator =(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
+    auto operator =(Matrix<T, m, n> && mat) -> Matrix<T, m, n> &;
 
     friend class Matrix<T, n, m>;
 
@@ -49,25 +50,18 @@ class Matrix {
     auto operator[](std::size_t row) -> Row {
         return Row(*this, row);
     }
-    auto operator[](std::size_t row) const -> Row & {
-        return Row(*this, row);
-    }
     auto operator==(Matrix<T, m, n> const & mat) const -> bool;
     auto operator!=(Matrix<T, m, n> const & mat) const -> bool;
-    auto operator=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
-    auto operator=(Matrix<T, m, n> && mat) -> Matrix<T, m, n> &;
 
     auto operator+(Matrix<T, m, n> const & mat) const -> Matrix<T, m, n>;
     auto operator-(Matrix<T, m, n> const & mat) const -> Matrix<T, m, n>;
     auto operator*(T const & scalar) const -> Matrix<T, m, n>;
-    auto operator*(Vector3D<T> const & vec) const -> Vector3D<T>;
     auto operator*(Matrix<T, n, m> const & mat) const -> Matrix<T, m, m>;
     auto operator/(T const & scalar) const -> Matrix<T, m, n>;
 
     auto operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
     auto operator-=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> &;
     auto operator*=(T const & scalar) -> Matrix<T, m, n> &;
-    auto operator*=(Matrix<T, n, m> const & mat) -> Matrix<T, n, n> &;
     auto operator/=(T const & scalar) -> Matrix<T, m, n> &;
 
     inline auto operator!() -> Matrix<T, m, n>;
@@ -82,12 +76,13 @@ class Matrix {
     auto transpose() const -> Matrix<T, m, n>;
     auto adjoint() const -> Matrix<T, m, n>;
     auto identity() const -> Matrix<T, m, n>;
+    auto rank() const -> std::size_t;
     /// Implementation of the matrix row
     class Row {
       public:
-        Matrix & parent;
+        Matrix<T, m, n> & parent;
         std::size_t row;
-        Row(Matrix & parent, std::size_t row) : parent(parent), row(row) {
+        Row(Matrix<T, m, n> & parent, std::size_t row) : parent(parent), row(row) {
         }
         auto operator[](std::size_t col) -> T & {
             return parent(row, col);
@@ -100,20 +95,27 @@ class Matrix {
 };
 
 /// @brief Construct a new Matrix object
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 Matrix<T, m, n>::Matrix() {
     static_assert(m > 0 && n > 0);
+    for (std::size_t i = 0; i < m; i++) {
+        for (std::size_t j = 0; j < n; j++) {
+            this->m_matrix[i][j] = 0.0;
+        }
+    }
 }
 
-/// @brief Construct a new Matrix object
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param mat The matrix to copy
+/**
+* @brief Construct a new Matrix object
+* @tparam T TThe type that is used for calculations within the matrix
+* @tparam m The number of rows in the matrix
+* @tparam n The number of coloumns in the matrix
+* @param mat The matrix to copy
+*/
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 Matrix<T, m, n>::Matrix(Matrix<T, m, n> const & mat) {
@@ -121,11 +123,14 @@ Matrix<T, m, n>::Matrix(Matrix<T, m, n> const & mat) {
     m_matrix = mat.m_matrix;
 }
 
-/// @brief Construct a new Matrix object
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param mat The matrix to move
+/**
+* Construct a new Matrix object
+*
+* @tparam T The type that is used for calculations within the matrix
+* @tparam m The number of rows in the matrix
+* @tparam n The number of coloumns in the matrix
+* @param mat The matrix to move
+*/
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 Matrix<T, m, n>::Matrix(Matrix<T, m, n> && mat) {
@@ -134,11 +139,11 @@ Matrix<T, m, n>::Matrix(Matrix<T, m, n> && mat) {
 }
 
 /**
- * @brief Construct a new Matrix object
+ * Construct a new Matrix object
  *
- * @tparam T the type of value used to build the matrix
- * @tparam m the number of rows in the matrix
- * @tparam n the number of columns in the matrix
+ * @tparam T The type that is used for calculations within the matrix
+ * @tparam m The number of rows in the matrix
+ * @tparam n The number of columns in the matrix
  * @param values the values for the matrix in row-major order
  */
 template <typename T, std::size_t m, std::size_t n>
@@ -165,7 +170,7 @@ Matrix<T, m, n>::Matrix(const std::vector<T> values) {
 }
 
 /// @brief Construct a new Matrix object from a list of values
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param list The list of values to construct the matrix from
@@ -191,7 +196,7 @@ Matrix<T, m, n>::Matrix(std::initializer_list<T> list) {
 }
 
 /// @brief Construct a new Matrix object from an array of values
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of columns in the matrix
 /// @param values The array of values to construct the matrix from
@@ -204,7 +209,7 @@ Matrix<T, m, n>::Matrix(std::array<std::array<T, n>, m> mat) {
 }
 
 /// Destructor for the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of columns in the matrix
 template <typename T, std::size_t m, std::size_t n>
@@ -212,22 +217,43 @@ template <typename T, std::size_t m, std::size_t n>
 Matrix<T, m, n>::~Matrix() {
 }
 
-/// @brief Get a reference to the value at the specified row and coloumn
-/// @tparam T The underlying type of the matrix
+/// @brief Copy assignment operator
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
-/// @param i The row index
-/// @param j The coloumn index
-/// @return T& The value at the specified row and coloumn
+/// @param mat The matrix to copy
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-[[nodiscard]] inline auto Matrix<T, m, n>::operator()(std::size_t i, std::size_t j) -> T & {
-    assert(i < m && j < n);
-    return this->m_matrix[i][j];
+auto Matrix<T, m, n>::operator=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> & {
+    static_assert(m > 0 && n > 0);
+    for (std::size_t i = 0; i < m; i++) {
+        for (std::size_t j = 0; j < n; j++) {
+            this->m_matrix[i][j] = mat.m_matrix[i][j];
+        }
+    }
+    return *this;
+}
+
+/// @brief Move assignment operator
+/// @tparam T The type that is used for calculations within the matrix
+/// @tparam m The number of rows in the matrix
+/// @tparam n The number of coloumns in the matrix
+/// @param mat The matrix to move
+/// @return Matrix<T, m, n> & A reference to the moved matrix
+template <typename T, std::size_t m, std::size_t n>
+    requires std::is_floating_point_v<T>
+auto Matrix<T, m, n>::operator=(Matrix<T, m, n> && mat) -> Matrix<T, m, n> & {
+    static_assert(m > 0 && n > 0);
+    for (std::size_t i = 0; i < m; i++) {
+        for (std::size_t j = 0; j < n; j++) {
+            this->m_matrix[i][j] = std::move(mat[i][j]);
+        }
+    }
+    return *this;
 }
 
 /// @brief Get a const reference to the value at the specified row and coloumn
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param i The row index
@@ -240,41 +266,22 @@ template <typename T, std::size_t m, std::size_t n>
     return this->m_matrix[i][j];
 }
 
-/// @brief Copy assignment operator
-/// @tparam T The underlying type of the matrix
+/// @brief Get a const reference to the value at the specified row and coloumn
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
-/// @param mat The matrix to copy
+/// @param i The row index
+/// @param j The coloumn index
+/// @return T& The value at the specified row and coloumn
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-auto Matrix<T, m, n>::operator=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> & {
-    for (std::size_t i = 0; i < m; i++) {
-        for (std::size_t j = 0; j < n; j++) {
-            this->m_matrix[i][j] = mat[i][j];
-        }
-    }
-    return *this;
-}
-
-/// @brief Move assignment operator
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param mat The matrix to move
-/// @return Matrix<T, m, n> & A reference to the moved matrix
-template <typename T, std::size_t m, std::size_t n>
-    requires std::is_floating_point_v<T>
-auto Matrix<T, m, n>::operator=(Matrix<T, m, n> && mat) -> Matrix<T, m, n> & {
-    for (std::size_t i = 0; i < m; i++) {
-        for (std::size_t j = 0; j < n; j++) {
-            this->m_matrix[i][j] = std::move(mat[i][j]);
-        }
-    }
-    return *this;
+[[nodiscard]] inline auto Matrix<T, m, n>::operator()(std::size_t i, std::size_t j) -> T & {
+    assert(i < m && j < n);
+    return this->m_matrix[i][j];
 }
 
 /// Adds two matrices together
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam b The number of coloumns in the matrix
 /// @param mat The matrix to add
@@ -292,7 +299,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// Subtracts a matrix from this matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam b The number of coloumns in the matrix
 /// @param mat The matrix to subtract
@@ -309,12 +316,14 @@ template <typename T, std::size_t m, std::size_t n>
     return Matrix<T, m, n>(result);
 }
 
-/// Multiplies the Matrix by a scalar
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param scalar The scalar to multiply by
-/// @return Matrix<T, m, n> The product of the matrix and the scalar
+/**
+* Multiplies the Matrix by a scalar
+* @tparam T The type that is used for calculations within the matrix
+* @tparam m The number of rows in the matrix
+* @tparam n The number of coloumns in the matrix
+* @param scalar The scalar to multiply by
+* @return Matrix<T, m, n> The product of the matrix and the scalar
+*/
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 [[nodiscard]] auto Matrix<T, m, n>::operator*(T const & scalar) const -> Matrix<T, m, n> {
@@ -327,33 +336,14 @@ template <typename T, std::size_t m, std::size_t n>
     return Matrix<T, m, n>(result);
 }
 
-/// Multiplies the matrix with a vector
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param vec The vector to multiply by
-/// @return Vector3D<T> The product of the matrix and the vector
-template <typename T, std::size_t m, std::size_t n>
-    requires std::is_floating_point_v<T>
-[[nodiscard]] auto Matrix<T, m, n>::operator*(Vector3D<T> const & vec) const -> Vector3D<T> {
-    static_assert(m == 3 && n == 3, "Matrix must have 3 columns and 3 rows");
-    T x = 0;
-    T y = 0;
-    T z = 0;
-    for (std::size_t i = 0; i < m; i++) {
-        x += this->m_matrix[0][i] * vec[i];
-        y += this->m_matrix[1][i] * vec[i];
-        z += this->m_matrix[2][i] * vec[i];
-    }
-    return Vector3D<T>(x, y, z);
-}
-
-/// Divides the Matrix by a scalar
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param scalar The scalar to divide by
-/// @return Matrix<T, m, n> The quotient of the matrix and the scalar
+/**
+* Divides the Matrix by a scalar
+* @tparam T TThe type that is used for calculations within the matrix
+* @tparam m The number of rows in the matrix
+* @tparam n The number of coloumns in the matrix
+* @param scalar The scalar to divide by
+* @return Matrix<T, m, n> The quotient of the matrix and the scalar
+*/
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
 [[nodiscard]] auto Matrix<T, m, n>::operator/(T const & scalar) const -> Matrix<T, m, n> {
@@ -392,67 +382,75 @@ requires std::is_floating_point_v<T>
 }
 
 /// @brief Add a matrix to this matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param mat The matrix to add
 /// @return Matrix<T, m, n> & A reference to the moved matrix
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-[[nodiscard]] auto Matrix<T, m, n>::operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> & {
-    return *this = this + mat;
+auto Matrix<T, m, n>::operator+=(Matrix<T, m, n> const & mat) -> Matrix<T, m, n> & {
+    for(int i = 0; i < m; i++) {
+        for(int j = 0; j < n; j++) {
+            m_matrix[i][j] += mat.m_matrix[i][j];
+        }
+    }
+    return *this;
 }
 
 /// Subtracts a matrix from this matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param mat The matrix to subtract
 /// @return Matrix<T, m, n> & A reference to the moved matrix
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-[[nodiscard]] Matrix<T, m, n> & Matrix<T, m, n>::operator-=(Matrix<T, m, n> const & mat) {
-    return *this = *this - mat;
+Matrix<T, m, n> & Matrix<T, m, n>::operator-=(Matrix<T, m, n> const & mat) {
+    for(int i = 0; i < m; i++) {
+        for(int j = 0; j < n; j++) {
+            m_matrix[i][j] -= mat.m_matrix[i][j];
+        }
+    }
+    return *this;
 }
 
 /// @brief Multiply this matrix by a scalar
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param scalar The scalar to multiply by
 /// @return Matrix<T, m, n> & A reference to the moved matrix
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-[[nodiscard]] auto Matrix<T, m, n>::operator*=(T const & scalar) -> Matrix<T, m, n> & {
-    return *this = this * scalar;
-}
-
-/// @brief Multiply this matrix by a scalar
-/// @tparam T The underlying type of the matrix
-/// @tparam m The number of rows in the matrix
-/// @tparam n The number of coloumns in the matrix
-/// @param scalar The scalar to multiply by
-/// @return Matrix<T, m, n> & A reference to the moved matrix
-template <typename T, std::size_t m, std::size_t n>
-    requires std::is_floating_point_v<T>
-[[nodiscard]] auto Matrix<T, m, n>::operator*=(Matrix<T, n, m> const & mat) -> Matrix<T, n, n> & {
-    return *this = this * mat;
+auto Matrix<T, m, n>::operator*=(T const & scalar) -> Matrix<T, m, n> & {
+    for(int i = 0; i < m; i++) {
+        for(int j = 0; j < n; j++) {
+            m_matrix[i][j] *= scalar;
+        }
+    }
+    return *this;
 }
 
 /// @brief Divide this matrix by a scalar
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param scalar The scalar to divide by
 /// @return Matrix<T, m, n> & A reference to the moved matrix
 template <typename T, std::size_t m, std::size_t n>
     requires std::is_floating_point_v<T>
-[[nodiscard]] auto Matrix<T, m, n>::operator/=(T const & scalar) -> Matrix<T, m, n> & {
-    return *this = this * scalar;
+auto Matrix<T, m, n>::operator/=(T const & scalar) -> Matrix<T, m, n> & {
+    for(int i = 0; i < m; i++) {
+        for(int j = 0; j < n; j++) {
+            m_matrix[i][j] /= scalar;
+        }
+    }
+    return *this;
 }
 
 /// Compares two matrices for equality
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param mat The matrix to compare to
@@ -472,7 +470,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// Creates the inverse of the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam b The number of coloumns in the matrix
 /// @return Matrix<T, m, n> The inverse of the matrix
@@ -483,7 +481,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// Compares two matrices for inequality
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param mat The matrix to compare to
@@ -496,7 +494,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// @brief Get the number of rows in the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return std::size_t The number of rows in the matrix
@@ -507,7 +505,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// @brief Gets the number of coloumns in the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return std::size_t The number of coloumns in the matrix
@@ -518,7 +516,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// Calculates the determinant of the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return T The determinant of the matrix
@@ -540,7 +538,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// Calculates the cofactor of the matrix at the specified row and coloumn
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @param i The row index
@@ -557,7 +555,7 @@ template <typename T, std::size_t m, std::size_t n>
 /**
  * Calculates the minor of the matrix at the specified row and column
  *
- * @tparam T The underlying type of the matrix
+ * @tparam T The type that is used for calculations within the matrix
  * @tparam m The number of rows in the matrix
  * @tparam n The number of columns in the matrix
  * @param i The row index
@@ -589,7 +587,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// @brief Calculates the inverse of the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return Matrix<T, m, n> The inverse of the matrix
@@ -608,7 +606,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// @brief Calculates the transpose of the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return Matrix<T, m, n> The transpose of the matrix
@@ -625,7 +623,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// @brief Calculates the adjoint of the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return Matrix<T, m, n> The adjoint of the matrix
@@ -643,7 +641,7 @@ template <typename T, std::size_t m, std::size_t n>
 }
 
 /// @brief Calculates the identity matrix of the same size as the matrix
-/// @tparam T The underlying type of the matrix
+/// @tparam T The type that is used for calculations within the matrix
 /// @tparam m The number of rows in the matrix
 /// @tparam n The number of coloumns in the matrix
 /// @return Matrix<T, m, n> The identity matrix of the same size as the matrix
@@ -657,6 +655,30 @@ template <typename T, std::size_t m, std::size_t n>
         }
     }
     return identity;
+}
+
+/// @brief Calculates the rank of the matrix
+/// @tparam T  The type that is used for calculations within the matrix
+/// @tparam m The number of rows in the matrix
+/// @tparam n The amount of columns in the matrix
+/// @return The rank of the matrix 
+template <typename T, std::size_t m, std::size_t n>
+    requires std::is_floating_point_v<T>
+[[nodiscard]] auto Matrix<T, m, n>::rank() const -> std::size_t {
+    std::size_t rank = 0;
+    Matrix<T, m, n> copy(*this);
+    for (std::size_t i = 0; i < m; i++) {
+        if (copy[i][i] != 0) {
+            rank++;
+            for (std::size_t j = i + 1; j < m; j++) {
+                T ratio = copy[j][i] / copy[i][i];
+                for (std::size_t k = 0; k < n; k++) {
+                    copy[j][k] -= ratio * copy[i][k];
+                }
+            }
+        }
+    }
+    return rank;
 }
 
 } // namespace GDM

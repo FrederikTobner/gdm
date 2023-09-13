@@ -36,4 +36,3 @@ jobs:
       working-directory: ${{github.workspace}}/build/test
       if: env.BUILD_TYPE == 'Debug'
       run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
-
